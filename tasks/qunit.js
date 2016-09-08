@@ -39,6 +39,8 @@ module.exports = function(grunt) {
     }
   };
 
+  var errorCount = 0;
+
   // Keep track of failed assertions for pretty-printing.
   var failedAssertions = [];
   var logFailedAssertions = function() {
@@ -172,6 +174,7 @@ module.exports = function(grunt) {
   });
 
   phantomjs.on('error.onError', function (msg, stackTrace) {
+    errorCount++;
     grunt.event.emit('qunit.error.onError', msg, stackTrace);
   });
 
@@ -189,7 +192,8 @@ module.exports = function(grunt) {
       console: true,
       // Do not use an HTTP base by default
       httpBase: false,
-      summaryOnly: false
+      summaryOnly: false,
+      failOnJsErrors: false,
     });
 
     var urls;
@@ -287,6 +291,9 @@ module.exports = function(grunt) {
 
       if (options && options.force) {
         success = true;
+      } else if (options && options.failOnJsErrors && errorCount) {
+        success = false;
+        grunt.verbose.or.error('Failed due to JS error');
       } else {
         success = status.failed === 0;
       }
